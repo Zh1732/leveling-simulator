@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>水准仪粗平教学仿真系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main-container">
+        <!-- 顶部标题栏 -->
+        <div class="header">
+            <div class="academy-badge">北华航天工业学院 · 建筑工程学院</div>
+            <h1 class="main-title">🔧 水准仪粗平仿真教学系统</h1>
+            <div class="subtitle">顺时针升高 → 气泡向高处移动</div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="content-area">
+            <!-- 左侧：水准仪面板 -->
+            <div class="left-panel">
+                <div class="level-display-container">
+                    <div class="canvas-wrapper">
+                        <canvas id="bubbleCanvas" width="400" height="400"></canvas>
+                        <!-- 脚螺旋位置指示器 (都在大圆内) -->
+                        <div class="screw-indicator screw1">1</div> <!-- 左后方 (大圆内) -->
+                        <div class="screw-indicator screw2">2</div> <!-- 右后方 (大圆内) -->
+                        <div class="screw-indicator screw3">3</div> <!-- 正前方 (大圆内) -->
+                    </div>
+                </div>
+
+                <!-- 状态显示 -->
+                <div class="status-display">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">X轴倾斜</span>
+                            <span id="xAngle" class="status-value">0.00°</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Y轴倾斜</span>
+                            <span id="yAngle" class="status-value">0.00°</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">气泡偏移</span>
+                            <span id="bubbleOffset" class="status-value">0.00</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">操作步数</span>
+                            <span id="stepCount" class="status-value">0</span>
+                        </div>
+                    </div>
+                    <div id="levelStatus" class="level-state">⚠️ 需要调平</div>
+                </div>
+
+                <!-- 操作原理说明 -->
+                <div class="instruction-panel">
+                    <h3 class="instruction-title">💡 操作原理</h3>
+                    <div class="instruction-content">
+                        水准仪粗平的核心原理：<strong>"左手拇指法则"</strong><br>
+                        1. 双手同时相对/相背旋转两个脚螺旋<br>
+                        2. 气泡向左手大拇指转动的方向移动<br>
+                        3. 先使气泡大致居中，再精平<br><br>
+                        <ol>
+                            <li><strong>相对旋转</strong>：双手向内(↓↑)或向外(↑↓)转动</li>
+                            <li><strong>相背旋转</strong>：双手同向(↑↑)或反向(↓↓)转动</li>
+                        </ol>
+                        <div class="standard-note">
+                            注：气泡可在整个大圆内移动，完全进入黑色圆圈内即为调平成功。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：控制面板 -->
+            <div class="right-panel">
+                <h2 class="panel-title">🎛️ 脚螺旋控制区</h2>
+                <div class="screws-control">
+                    <div class="screws-container">
+                        <!-- 脚螺旋1 (左后方) -->
+                        <div class="screw-card">
+                            <div class="screw-header">
+                                <div class="screw-title">🔩 脚螺旋 1</div>
+                                <div class="screw-position">左后方</div>
+                            </div>
+                            <div class="screw-controls">
+                                <button class="screw-btn cw" onclick="adjustScrew(1, 5)">⬅️ 逆时针</button>
+                                <button class="screw-btn ccw" onclick="adjustScrew(1, -5)">顺时针 ➡️</button>
+                            </div>
+                            <div id="screw1Value" class="screw-value">50</div>
+                        </div>
+                        <!-- 脚螺旋2 (右后方) -->
+                        <div class="screw-card">
+                            <div class="screw-header">
+                                <div class="screw-title">🔩 脚螺旋 2</div>
+                                <div class="screw-position">右后方</div>
+                            </div>
+                            <div class="screw-controls">
+                                <button class="screw-btn cw" onclick="adjustScrew(2, 5)">⬅️ 逆时针</button>
+                                <button class="screw-btn ccw" onclick="adjustScrew(2, -5)">顺时针 ➡️</button>
+                            </div>
+                            <div id="screw2Value" class="screw-value">50</div>
+                        </div>
+                        <!-- 脚螺旋3 (正前方) - 修复旋转逻辑 -->
+                        <div class="screw-card">
+                            <div class="screw-header">
+                                <div class="screw-title">🔩 脚螺旋 3</div>
+                                <div class="screw-position">正前方</div>
+                            </div>
+                            <div class="screw-controls">
+                                <button class="screw-btn cw" onclick="adjustScrew(3, -5)">⬅️ 逆时针</button>
+                                <button class="screw-btn ccw" onclick="adjustScrew(3, 5)">顺时针 ➡️</button>
+                            </div>
+                            <div id="screw3Value" class="screw-value">50</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 组合操作区 (仅关联1,2号) -->
+                <h2 class="panel-title">👐 组合操作 (两手协同：1,2号)</h2>
+                <div class="combo-controls">
+                    <div class="combo-grid">
+                        <button class="combo-btn" onclick="comboAction('both_up')">⬆️ 双手同升</button>
+                        <button class="combo-btn" onclick="comboAction('both_down')">⬇️ 双手同降</button>
+                        <button class="combo-btn" onclick="comboAction('inward')">↘️ 双手向内</button>
+                        <button class="combo-btn" onclick="comboAction('outward')">↗️ 双手向外</button>
+                    </div>
+                </div>
+
+                <!-- 功能按钮区 - 去掉一键调平 -->
+                <h2 class="panel-title">⚙️ 系统功能</h2>
+                <div class="function-controls">
+                    <div class="function-grid">
+                        <button class="function-btn primary" onclick="randomTilt()">🎲 随机倾斜</button>
+                        <button class="function-btn warning" onclick="resetLevel()">🔄 重置水平</button>
+                        <button class="function-btn secondary" onclick="showHint()">💡 操作提示</button>
+                    </div>
+                </div>
+
+                <!-- 键盘快捷键提示 -->
+                <div class="keyboard-hint">
+                    <div class="keyboard-title">⌨️ 键盘快捷键</div>
+                    <div class="keyboard-keys">
+                        <div class="key-item"><span class="key">Q</span>/<span class="key">W</span> 螺旋1</div>
+                        <div class="key-item"><span class="key">A</span>/<span class="key">S</span> 螺旋2</div>
+                        <div class="key-item"><span class="key">Z</span>/<span class="key">X</span> 螺旋3</div>
+                        <div class="key-item"><span class="key">R</span> 重置</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <p>© 2024 北华航天工业学院 - 建筑工程学院 | 虚拟仿真教学工具 v1.0</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
